@@ -1,3 +1,4 @@
+import datetime
 from sqlalchemy import Column
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
@@ -26,10 +27,29 @@ class Movie(db.Model):
 
     id = Column(db.Integer, primary_key=True)
     title = Column(db.String(120), nullable=False)
-    release = Column(db.DateTime, nullable=False)
+    release = Column(db.Date, nullable=False)
 
     def __repr__(self):
         return f'<Movie id:{self.id} title: {self.title} release:{self.release}>'
+
+    def short(self):
+        return {
+            'id': self.id,
+            'title': self.title,
+            'release': self.release.strftime("%A, %d. %B %Y"),
+        }
+
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    @staticmethod
+    def update():
+        db.session.commit()
 
 
 # Actor
@@ -41,8 +61,33 @@ class Actor(db.Model):
 
     id = Column(db.Integer, primary_key=True)
     name = Column(db.String(120), nullable=False)
-    birthdate = Column(db.DateTime, nullable=False)
+    birthdate = Column(db.Date, nullable=False)
     gender = Column(db.String(20), nullable=False)
 
     def __repr__(self):
         return f'<Actor id:{self.id} name: {self.name} birthdate:{self.birthdate} gender:{self.gender}>'
+
+    def short(self):
+        today = datetime.date.today()
+        born = self.birthdate
+        age = today.year - born.year - ((today.month, today.day) < (born.month, born.day))
+
+        return {
+            'id': self.id,
+            'name': self.name,
+            'dob': self.birthdate.strftime("%d. %B %Y"),
+            'age': age,
+            'gender': self.gender,
+        }
+
+    def insert(self):
+        db.session.add(self)
+        db.session.commit()
+
+    def delete(self):
+        db.session.delete(self)
+        db.session.commit()
+
+    @staticmethod
+    def update():
+        db.session.commit()

@@ -1,5 +1,5 @@
 import os
-SECRET_KEY = os.urandom(32)
+SECRET_KEY = os.environ['SECRET_KEY']
 # Grabs the folder where the script runs.
 basedir = os.path.abspath(os.path.dirname(__file__))
 
@@ -7,9 +7,8 @@ basedir = os.path.abspath(os.path.dirname(__file__))
 DEBUG = True
 
 # Database URL
-SQLALCHEMY_DATABASE_URI = 'postgresql://bianca@localhost:5432/cagency'
+SQLALCHEMY_DATABASE_URI = os.environ['DATABASE_URL']
 
 # Disable tracking modifications of objects and emit signals (default = None)
 SQLALCHEMY_TRACK_MODIFICATIONS = False
 
-# WTF_CSRF_CHECK_DEFAULT = False
