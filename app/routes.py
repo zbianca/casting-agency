@@ -1,12 +1,17 @@
 import json
 import markdown
 import markdown.extensions.fenced_code
-from flask import request, jsonify, abort
+import os
+from flask import request, jsonify, abort, redirect
 from app import app
 from app.models import Movie, Actor
+from app.auth import AuthError, requires_auth
 
-
-# from .auth.auth import AuthError, requires_auth
+AUTH0_DOMAIN = os.environ['AUTH0_DOMAIN']
+ALGORITHMS = os.environ['ALGORITHMS']
+API_AUDIENCE = os.environ['API_AUDIENCE']
+AUTH0_CLIENT_ID = os.environ['AUTH0_CLIENT_ID']
+AUTH0_CALLBACK_URL = os.environ['AUTH0_CALLBACK_URL']
 
 
 # CORS Headers
@@ -30,10 +35,22 @@ def index():
     return md_template_string
 
 
+# redirects to auth0 login page
+@app.route("/login", methods=["GET"])
+def generate_auth_url():
+    url = f'https://{AUTH0_DOMAIN}/authorize' \
+          f'?audience={API_AUDIENCE}' \
+          f'&response_type=token&client_id=' \
+          f'{AUTH0_CLIENT_ID}&redirect_uri=' \
+          f'{AUTH0_CALLBACK_URL}'
+
+    return redirect(url)
+
+
 # get all actors
 @app.route('/actors', methods=['GET'])
-# @requires_auth('get:actors')
-def get_actors():
+@requires_auth('get:actors')
+def get_actors(payload):
     try:
         actors = Actor.query.all()
 
@@ -50,8 +67,8 @@ def get_actors():
 
 # get all movies
 @app.route('/movies', methods=['GET'])
-# @requires_auth('get:movies')
-def get_movies():
+@requires_auth('get:movies')
+def get_movies(payload):
     try:
         movies = Movie.query.all()
 
@@ -68,8 +85,8 @@ def get_movies():
 
 # Delete Actor by id
 @app.route('/actors/<int:actor_id>', methods=['DELETE'])
-# @requires_auth('delete:actors')
-def delete_actor(actor_id):
+@requires_auth('delete:actors')
+def delete_actor(payload, actor_id):
     try:
         actor = Actor.query.get(actor_id)
 
@@ -92,8 +109,8 @@ def delete_actor(actor_id):
 
 # Delete Movie by id
 @app.route('/movies/<int:movie_id>', methods=['DELETE'])
-# @requires_auth('delete:movies')
-def delete_movie(movie_id):
+@requires_auth('delete:movies')
+def delete_movie(payload, movie_id):
     try:
         movie = Movie.query.get(movie_id)
 
@@ -116,8 +133,8 @@ def delete_movie(movie_id):
 
 # Add a new actor
 @app.route('/actors', methods=['POST'])
-# @requires_auth('post:actors')
-def create_actor():
+@requires_auth('post:actors')
+def create_actor(payload):
     body = request.get_json()
     name = body.get('name', None)
     birthdate = body.get('birthdate', None)  # 'YYYY-MM-DD'
@@ -140,8 +157,8 @@ def create_actor():
 
 # Add a new movie
 @app.route('/movies', methods=['POST'])
-# @requires_auth('post:movies')
-def create_movie():
+@requires_auth('post:movies')
+def create_movie(payload):
     body = request.get_json()
     title = body.get('title', None)
     release = body.get('release', None)  # 'YYYY-MM-DD'
@@ -163,8 +180,8 @@ def create_movie():
 
 # Edit an actor
 @app.route('/actors/<int:actor_id>', methods=['PATCH'])
-# @requires_auth('patch:actors')
-def update_actor(actor_id):
+@requires_auth('patch:actors')
+def update_actor(payload, actor_id):
     body = request.get_json()
     name = body.get('name', None)
     birthdate = body.get('birthdate', None)  # 'YYYY-MM-DD'
@@ -194,8 +211,8 @@ def update_actor(actor_id):
 
 # Edit a movie
 @app.route('/movies/<int:movie_id>', methods=['PATCH'])
-# @requires_auth('patch:movies')
-def update_movie(movie_id):
+@requires_auth('patch:movies')
+def update_movie(payload, movie_id):
     body = request.get_json()
     title = body.get('title', None)
     release = body.get('release', None)  # 'YYYY-MM-DD'
@@ -283,10 +300,11 @@ def server_error(error):
         "message": "internal server error"
     }), 500
 
-# @app.errorhandler(AuthError)
-# def auth_error(error):
-#     return jsonify({
-#         "success": False,
-#         "error": error.status_code,
-#         "message": error.error['description']
-#     }), error.status_code
+
+@app.errorhandler(AuthError)
+def auth_error(error):
+    return jsonify({
+        "success": False,
+        "error": error.status_code,
+        "message": error.error['description']
+    }), error.status_code
