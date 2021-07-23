@@ -6,13 +6,38 @@ from flask_migrate import Migrate
 db = SQLAlchemy()
 
 
+def seed_data():
+    first_actor = {
+        "name": "Cameron Diaz",
+        "birthdate": "1972-08-30",
+        "gender": "f"
+    }
+
+    first_movie = {
+      "title": "Shrek",
+      "release": "2001-05-18"
+    }
+
+    actor = Actor.query.first()
+    movie = Movie.query.first()
+
+    if actor is None:
+        actor = Actor(name=first_actor["name"], birthdate=first_actor["birthdate"], gender=first_actor["gender"])
+        actor.insert()
+
+    if movie is None:
+        movie = Movie(title=first_movie["title"], release=first_movie["release"])
+        movie.insert()
+
+
 # setup_db(app)
 # binds a flask application and a SQLAlchemy service
 def setup_db(app):
     db.app = app
-    Migrate(app, db)
+    Migrate(app, db, compare_type=True)
     db.init_app(app)
     db.create_all()
+    seed_data()
 
 
 # Movie

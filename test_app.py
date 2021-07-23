@@ -10,17 +10,6 @@ TKN_DIRECTOR = f'Bearer %s' % (os.environ['DIRECTOR'])
 TKN_PRODUCER = f'Bearer %s' % (os.environ['PRODUCER'])
 TEST_DATABASE_URI = os.environ['TEST_DATABASE_URL']
 
-first_actor = {
-    "name": "Cameron Diaz",
-    "birthdate": "1972-08-30",
-    "gender": "f"
-}
-
-first_movie = {
-  "title": "Shrek",
-  "release": "2001-05-18"
-}
-
 new_actor = {
     "name": "Benedict Cucumberbatch",
     "birthdate": "1976-07-19",
@@ -68,18 +57,6 @@ class CagencyTestCase(unittest.TestCase):
             self.db = SQLAlchemy()
             self.db.init_app(self.app)
             self.db.create_all()
-
-        self.client().post(
-            '/actors',
-            json=first_actor,
-            headers={"Content-Type": 'application/json', "Authorization": TKN_PRODUCER}
-        )
-
-        self.client().post(
-            '/movies',
-            json=first_movie,
-            headers={"Content-Type": 'application/json', "Authorization": TKN_PRODUCER}
-        )
 
     def tearDown(self):
         """Executed after reach test"""
