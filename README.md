@@ -72,6 +72,8 @@ createdb cagency_test
 python test_app.py
 ```
 
+The repository has a Postman collection file, in which tokens were not included. Please edit the tokens on the json file before using the collection to test the endpoints. 
+
 ## Endpoints
 
 ### GET `/actors`
