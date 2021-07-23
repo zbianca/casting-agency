@@ -1,5 +1,8 @@
 # Casting Agency API
 
+### Heroku Server
+Project hosted in heroku: https://casting-agency-bz.herokuapp.com
+
 ## Getting Started
 
 ### Installing Dependencies
