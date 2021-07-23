@@ -2,17 +2,13 @@ import datetime
 from sqlalchemy import Column
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-from app.config import SQLALCHEMY_DATABASE_URI
 
-database_path = SQLALCHEMY_DATABASE_URI
 db = SQLAlchemy()
 
 
 # setup_db(app)
 # binds a flask application and a SQLAlchemy service
 def setup_db(app):
-    app.config["SQLALCHEMY_DATABASE_URI"] = database_path
-    app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
     db.app = app
     Migrate(app, db)
     db.init_app(app)

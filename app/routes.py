@@ -2,8 +2,7 @@ import json
 import markdown
 import markdown.extensions.fenced_code
 import os
-from flask import request, jsonify, abort, redirect
-from app import app
+from flask import Blueprint, request, jsonify, abort, redirect
 from app.models import Movie, Actor
 from app.auth import AuthError, requires_auth
 
@@ -13,9 +12,11 @@ API_AUDIENCE = os.environ['API_AUDIENCE']
 AUTH0_CLIENT_ID = os.environ['AUTH0_CLIENT_ID']
 AUTH0_CALLBACK_URL = os.environ['AUTH0_CALLBACK_URL']
 
+routes = Blueprint('routes', __name__)
+
 
 # CORS Headers
-@app.after_request
+@routes.after_request
 def after_request(response):
     response.headers.add('Access-Control-Allow-Origin', '*')  # TODO: disallow CORS
     response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization,true')
@@ -25,7 +26,7 @@ def after_request(response):
 
 
 # render README as index
-@app.route('/')
+@routes.route('/')
 def index():
     readme_file = open("README.md", "r")
     md_template_string = markdown.markdown(
@@ -36,7 +37,7 @@ def index():
 
 
 # redirects to auth0 login page
-@app.route("/login", methods=["GET"])
+@routes.route("/login", methods=["GET"])
 def generate_auth_url():
     url = f'https://{AUTH0_DOMAIN}/authorize' \
           f'?audience={API_AUDIENCE}' \
@@ -48,7 +49,7 @@ def generate_auth_url():
 
 
 # get all actors
-@app.route('/actors', methods=['GET'])
+@routes.route('/actors', methods=['GET'])
 @requires_auth('get:actors')
 def get_actors(payload):
     try:
@@ -66,7 +67,7 @@ def get_actors(payload):
 
 
 # get all movies
-@app.route('/movies', methods=['GET'])
+@routes.route('/movies', methods=['GET'])
 @requires_auth('get:movies')
 def get_movies(payload):
     try:
@@ -84,7 +85,7 @@ def get_movies(payload):
 
 
 # Delete Actor by id
-@app.route('/actors/<int:actor_id>', methods=['DELETE'])
+@routes.route('/actors/<int:actor_id>', methods=['DELETE'])
 @requires_auth('delete:actors')
 def delete_actor(payload, actor_id):
     try:
@@ -93,7 +94,7 @@ def delete_actor(payload, actor_id):
         if not actor:
             return json.dumps({
                 'success': False,
-                'error': 'Actor not found to be deleted'
+                'message': 'Actor not found to be deleted'
             }), 404
 
         actor.delete()
@@ -108,7 +109,7 @@ def delete_actor(payload, actor_id):
 
 
 # Delete Movie by id
-@app.route('/movies/<int:movie_id>', methods=['DELETE'])
+@routes.route('/movies/<int:movie_id>', methods=['DELETE'])
 @requires_auth('delete:movies')
 def delete_movie(payload, movie_id):
     try:
@@ -117,7 +118,7 @@ def delete_movie(payload, movie_id):
         if not movie:
             return json.dumps({
                 'success': False,
-                'error': 'Movie not found to be deleted'
+                'message': 'Movie not found to be deleted'
             }), 404
 
         movie.delete()
@@ -132,7 +133,7 @@ def delete_movie(payload, movie_id):
 
 
 # Add a new actor
-@app.route('/actors', methods=['POST'])
+@routes.route('/actors', methods=['POST'])
 @requires_auth('post:actors')
 def create_actor(payload):
     body = request.get_json()
@@ -140,7 +141,7 @@ def create_actor(payload):
     birthdate = body.get('birthdate', None)  # 'YYYY-MM-DD'
     gender = body.get('gender', 'd')
 
-    if not (name or birthdate is None):
+    if name is None or birthdate is None:
         abort(422)
 
     try:
@@ -156,14 +157,14 @@ def create_actor(payload):
 
 
 # Add a new movie
-@app.route('/movies', methods=['POST'])
+@routes.route('/movies', methods=['POST'])
 @requires_auth('post:movies')
 def create_movie(payload):
     body = request.get_json()
     title = body.get('title', None)
     release = body.get('release', None)  # 'YYYY-MM-DD'
 
-    if not (title or release is None):
+    if title is None or release is None:
         abort(422)
 
     try:
@@ -179,7 +180,7 @@ def create_movie(payload):
 
 
 # Edit an actor
-@app.route('/actors/<int:actor_id>', methods=['PATCH'])
+@routes.route('/actors/<int:actor_id>', methods=['PATCH'])
 @requires_auth('patch:actors')
 def update_actor(payload, actor_id):
     body = request.get_json()
@@ -187,7 +188,7 @@ def update_actor(payload, actor_id):
     birthdate = body.get('birthdate', None)  # 'YYYY-MM-DD'
     gender = body.get('gender', None)
 
-    if not (name or birthdate or gender is None):
+    if name is None or birthdate is None or gender is None:
         abort(422)
 
     actor = Actor.query.get(actor_id)
@@ -195,7 +196,7 @@ def update_actor(payload, actor_id):
     if not actor:
         return json.dumps({
             'success': False,
-            'error': 'Actor not found to be edited'
+            'message': 'Actor not found to be edited'
         }), 404
 
     actor.name = name
@@ -210,14 +211,14 @@ def update_actor(payload, actor_id):
 
 
 # Edit a movie
-@app.route('/movies/<int:movie_id>', methods=['PATCH'])
+@routes.route('/movies/<int:movie_id>', methods=['PATCH'])
 @requires_auth('patch:movies')
 def update_movie(payload, movie_id):
     body = request.get_json()
     title = body.get('title', None)
     release = body.get('release', None)  # 'YYYY-MM-DD'
 
-    if not (title or release is None):
+    if title is None or release is None:
         abort(422)
 
     movie = Movie.query.get(movie_id)
@@ -225,7 +226,7 @@ def update_movie(payload, movie_id):
     if not movie:
         return json.dumps({
             'success': False,
-            'error': 'Movie not found to be edited'
+            'message': 'Movie not found to be edited'
         }), 404
 
     movie.title = title
@@ -238,7 +239,7 @@ def update_movie(payload, movie_id):
     })
 
 
-@app.errorhandler(422)
+@routes.errorhandler(422)
 def unprocessable(error):
     return jsonify({
         "success": False,
@@ -247,7 +248,7 @@ def unprocessable(error):
     }), 422
 
 
-@app.errorhandler(400)
+@routes.errorhandler(400)
 def bad_request(error):
     return jsonify({
         "success": False,
@@ -256,7 +257,7 @@ def bad_request(error):
     }), 400
 
 
-@app.errorhandler(401)
+@routes.errorhandler(401)
 def unauthorized(error):
     return jsonify({
         "success": False,
@@ -265,7 +266,7 @@ def unauthorized(error):
     }), 401
 
 
-@app.errorhandler(403)
+@routes.errorhandler(403)
 def forbidden(error):
     return jsonify({
         "success": False,
@@ -274,7 +275,7 @@ def forbidden(error):
     }), 403
 
 
-@app.errorhandler(404)
+@routes.errorhandler(404)
 def not_found(error):
     return jsonify({
         "success": False,
@@ -283,7 +284,7 @@ def not_found(error):
     }), 404
 
 
-@app.errorhandler(405)
+@routes.errorhandler(405)
 def not_allowed(error):
     return jsonify({
         "success": False,
@@ -292,7 +293,7 @@ def not_allowed(error):
     }), 405
 
 
-@app.errorhandler(500)
+@routes.errorhandler(500)
 def server_error(error):
     return jsonify({
         "success": False,
@@ -301,7 +302,7 @@ def server_error(error):
     }), 500
 
 
-@app.errorhandler(AuthError)
+@routes.errorhandler(AuthError)
 def auth_error(error):
     return jsonify({
         "success": False,

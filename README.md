@@ -48,6 +48,11 @@ createdb cagency
 
 ## Running the server
 
+On your first local run, source the setup.sh file. It defines shell environment variables necessary for the project. Run:
+```bash
+source setup.sh
+```
+
 From within the main directory first ensure you are working using your created virtual environment. Run:
 
 ```bash
@@ -61,8 +66,7 @@ To run the tests, run
 ```bash
 dropdb cagency_test
 createdb cagency_test
-psql cagency_test < cagency.psql
-python app/test_app.py
+python test_app.py
 ```
 
 ## Endpoints
@@ -197,12 +201,17 @@ Response:
     }
 }
 ```
-### Auth0 - API Roles:
+### Auth0
 
+Authentication route: `/login`
+
+#### Roles:
 - Assistant
+  * Can view actors and movies
 - Director
+  * All permissions a Casting Assistant has and…
+  * Add or delete an actor from the database
+  * Modify actors or movies
 - Producer
-
-### Heroku Server
-
-...
+  * All permissions a Casting Director has and…
+  * Add or delete a movie from the database
