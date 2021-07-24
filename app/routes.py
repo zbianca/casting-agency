@@ -62,7 +62,7 @@ def get_actors(payload):
             'success': True,
             'actors': [actor.short() for actor in actors]
         }), 200
-    except:
+    except Exception:
         abort(500)
 
 
@@ -80,7 +80,7 @@ def get_movies(payload):
             'success': True,
             'movies': [movie.short() for movie in movies]
         }), 200
-    except:
+    except Exception:
         abort(500)
 
 
@@ -99,7 +99,7 @@ def delete_actor(payload, actor_id):
 
         actor.delete()
 
-    except:
+    except Exception:
         abort(422)
 
     return jsonify({
@@ -123,7 +123,7 @@ def delete_movie(payload, movie_id):
 
         movie.delete()
 
-    except:
+    except Exception:
         abort(422)
 
     return jsonify({
@@ -152,7 +152,7 @@ def create_actor(payload):
             'success': True,
             'added': actor.short(),
         })
-    except:
+    except Exception:
         abort(500)
 
 
@@ -175,7 +175,7 @@ def create_movie(payload):
             'success': True,
             'added': movie.short(),
         })
-    except:
+    except Exception:
         abort(500)
 
 
